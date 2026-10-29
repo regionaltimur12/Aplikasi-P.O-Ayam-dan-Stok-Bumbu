@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitoring Orderan Ayam 3 Supplier & Marinade Japfa</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SheetJS & Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8faf9; scroll-behavior: smooth; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f3; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .card-shadow { box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.04), 0 8px 10px -6px rgba(15, 23, 42, 0.03); }
+    .input-focus { transition: all 0.2s ease-in-out; }
+    .input-focus:focus { transform: translateY(-1px); }
+  </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col relative">
+
+  <!-- MODAL UBAH PIN ADMIN -->
+  <div id="changePinModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 card-shadow border border-emerald-100 relative">
+      <div class="text-center mb-4">
+        <div class="w-12 h-12 bg-emerald-50 text-emerald-700 rounded-2xl flex items-center justify-center mx-auto mb-2 border border-emerald-200">
+          <i class="fa-solid fa-key text-xl"></i>
+        </div>
+        <h3 class="text-base font-bold text-slate-900">Ubah PIN Admin</h3>
+        <p class="text-xs text-slate-500 mt-0.5">Perbarui kata sandi otentikasi admin</p>
+      </div>
+
+      <form onsubmit="handleChangePinSubmit(event)" class="space-y-3">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">PIN Lama <span class="text-rose-500">*</span></label>
+          <input type="password" id="inputOldPin" maxlength="10" placeholder="Masukkan PIN lama" required class="w-full text-center tracking-widest text-sm font-bold px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">PIN Baru <span class="text-rose-500">*</span></label>
+          <input type="password" id="inputNewPin" maxlength="10" placeholder="Masukkan PIN baru" required class="w-full text-center tracking-widest text-sm font-bold px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Konfirmasi PIN Baru <span class="text-rose-500">*</span></label>
+          <input type="password" id="inputConfirmPin" maxlength="10" placeholder="Ulangi PIN baru" required class="w-full text-center tracking-widest text-sm font-bold px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+        </div>
+        <p id="changePinErrorText" class="text-xs text-rose-600 font-bold text-center hidden"></p>
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeChangePinModal()" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 rounded-xl text-xs transition-colors">Batal</button>
+          <button type="submit" class="w-1/2 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-2 rounded-xl text-xs transition-colors">Simpan PIN</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL VERIFIKASI PIN ADMIN -->
+  <div id="pinModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 card-shadow border border-rose-100 relative text-center">
+      <div class="w-12 h-12 bg-rose-50 text-rose-700 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-rose-200">
+        <i class="fa-solid fa-lock text-xl"></i>
+      </div>
+      <h3 class="text-base font-bold text-slate-900">Otentikasi PIN Admin</h3>
+      <p id="pinModalSub" class="text-xs text-slate-500 mt-1 mb-4">Masukkan PIN Admin untuk melakukan aksi ini.</p>
+      
+      <form onsubmit="handlePinSubmit(event)" class="space-y-4">
+        <input type="password" id="inputAdminPin" maxlength="10" placeholder="Masukkan PIN Admin..." required class="w-full text-center tracking-widest text-base font-extrabold px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-rose-600 focus:outline-none">
+        <p id="pinErrorText" class="text-xs text-rose-600 font-bold hidden">PIN Admin Salah! Akses ditolak.</p>
+        <div class="flex gap-2">
+          <button type="button" onclick="closePinModal()" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 rounded-xl text-xs transition-colors">Batal</button>
+          <button type="submit" class="w-1/2 bg-rose-700 hover:bg-rose-800 text-white font-semibold py-2 rounded-xl text-xs transition-colors">Konfirmasi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL LOGIN / FORM IDENTITAS PENGISI -->
+  <div id="loginModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-7 card-shadow border border-slate-100 relative overflow-hidden">
+      <div class="text-center mb-6 relative">
+        <div class="w-16 h-16 mx-auto mb-3 flex items-center justify-center bg-emerald-50 rounded-2xl border border-emerald-200">
+          <img id="logoTampilanAwal" src="https://via.placeholder.com/150/047857/ffffff?text=AGS" alt="Logo Tampilan Awal" class="w-12 h-12 object-contain rounded-xl">
+        </div>
+        <h2 class="text-xl font-bold text-slate-900">Otentikasi Pengisi Data</h2>
+        <p class="text-xs text-slate-500 font-medium mt-1">Sistem Monitoring Order Ayam & Marinade Terpadu</p>
+      </div>
+
+      <form onsubmit="handleUserLogin(event)" class="space-y-4 relative">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+            <i class="fa-solid fa-user text-emerald-700"></i> Nama Lengkap <span class="text-rose-500">*</span>
+          </label>
+          <input type="text" id="loginNama" required placeholder="Masukkan Nama Anda..." class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+            <i class="fa-solid fa-id-badge text-emerald-700"></i> Jabatan / Posisi <span class="text-rose-500">*</span>
+          </label>
+          <input type="text" id="loginJabatan" required placeholder="Contoh: Supervisor / Kasir / Cook" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+            <i class="fa-solid fa-store text-emerald-700"></i> Penempatan Store (Opsional)
+          </label>
+          <input type="text" id="loginPenempatan" placeholder="Contoh: AGS MAGETAN PANGSUD" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+        </div>
+        <button type="submit" class="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-bold py-3 rounded-xl transition-all text-xs flex items-center justify-center gap-2 mt-3">
+          <span>Masuk ke Aplikasi</span>
+          <i class="fa-solid fa-arrow-right text-emerald-200"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- HEADER NAVBAR -->
+  <header class="bg-emerald-950 text-white shadow-md border-b border-emerald-800/60 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-emerald-900 rounded-xl flex items-center justify-center border border-emerald-700 overflow-hidden p-0.5">
+          <img id="logoJudulUtama" src="https://via.placeholder.com/100/10b981/ffffff?text=AGS" alt="Logo Utama" class="w-full h-full object-contain rounded-lg">
+        </div>
+        <div>
+          <h1 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+            Monitoring Order Ayam 3 Supplier
+            <span class="bg-emerald-800/80 text-emerald-200 border border-emerald-700 text-[10px] px-2 py-0.5 rounded-full font-medium">2026-2028</span>
+          </h1>
+          <p class="text-[11px] text-emerald-200/80">Japfa | Afco | Delta — Database Terpusat Real-Time</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 bg-emerald-900/60 p-1.5 rounded-xl border border-emerald-800 text-xs flex-wrap justify-center">
+        <div class="px-2.5 py-1 rounded-lg bg-emerald-800 text-emerald-100 font-medium border border-emerald-700 flex items-center gap-1.5 text-[11px]">
+          <i class="fa-solid fa-user text-emerald-400"></i> 
+          <span><strong id="userDisplayNama" class="text-white">-</strong> (<span id="userDisplayJabatan" class="text-emerald-300">-</span>)</span>
+        </div>
+        <button onclick="openLoginModal()" class="px-2.5 py-1 rounded-lg bg-emerald-950 hover:bg-emerald-900 text-emerald-200 text-[11px] font-semibold transition-colors">Ganti User</button>
+        <button onclick="openChangePinModal()" class="px-2.5 py-1 rounded-lg bg-rose-900/80 hover:bg-rose-900 text-rose-100 text-[11px] font-semibold transition-colors flex items-center gap-1 border border-rose-800">
+          <i class="fa-solid fa-key text-[10px]"></i> Ubah PIN Admin
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-8">
+
+    <!-- 1. FORM INPUT SECTION -->
+    <div class="bg-white rounded-2xl card-shadow border border-slate-200/80 p-5 sm:p-6 relative">
+      <div class="flex items-center justify-between mb-5 pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <span class="w-7 h-7 bg-emerald-100 text-emerald-800 rounded-lg flex items-center justify-center font-bold text-xs">1</span>
+          <div>
+            <h2 class="text-base font-bold text-slate-800">Form Input Order Ayam & Marinade</h2>
+            <p class="text-[11px] text-slate-500">Pembatasan Pengisian Max 2 Bulan Ke Depan</p>
+          </div>
+        </div>
+        <span id="syncBadgeStatus" class="text-[10px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span> Auto-Sync Live
+        </span>
+      </div>
+
+      <form id="marinadeForm" onsubmit="handleFormSubmit(event)" class="space-y-5">
+        
+        <!-- Store, Year, Month & Initial Stock Input -->
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3.5">
+          <!-- Store -->
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">1. Nama Store <span class="text-rose-500">*</span></label>
+            <div class="relative">
+              <input type="text" id="inputStoreName" list="storeDatalist" placeholder="Ketik/Pilih Store..." required onchange="onStoreSelect(this.value)" class="input-focus w-full pl-8 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+              <i class="fa-solid fa-shop absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
+            </div>
+            <datalist id="storeDatalist"></datalist>
+          </div>
+
+          <!-- Pilihan Tahun (2026-2028) -->
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">2. Pilih Tahun <span class="text-rose-500">*</span></label>
+            <div class="relative">
+              <select id="inputYear" required onchange="updateMonthLimits(); syncFilterYearWithForm(this.value);" class="input-focus w-full pl-8 pr-2 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+                <option value="2026" selected>2026</option>
+                <option value="2027">2027</option>
+                <option value="2028">2028</option>
+              </select>
+              <i class="fa-solid fa-calendar-alt absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
+            </div>
+          </div>
+
+          <!-- Periode Bulan (Dibatasi 2 Bulan Ke Depan) -->
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">3. Periode Bulan <span class="text-rose-500">*</span></label>
+            <div class="relative">
+              <select id="inputMonth" required class="input-focus w-full pl-8 pr-2 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+                <option value="Januari">Januari</option>
+                <option value="Februari">Februari</option>
+                <option value="Maret">Maret</option>
+                <option value="April">April</option>
+                <option value="Mei">Mei</option>
+                <option value="Juni">Juni</option>
+                <option value="Juli">Juli</option>
+                <option value="Agustus">Agustus</option>
+                <option value="September">September</option>
+                <option value="Oktober">Oktober</option>
+                <option value="November">November</option>
+                <option value="Desember">Desember</option>
+              </select>
+              <i class="fa-solid fa-calendar-days absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
+            </div>
+          </div>
+
+          <!-- Stok Awal -->
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">4. Stok Awal Marinade <span class="text-rose-500">*</span></label>
+            <div class="relative">
+              <input type="number" id="inputStokAwal" min="0" placeholder="0" required class="input-focus w-full pl-8 pr-12 py-2 text-xs bg-emerald-50/50 border border-emerald-200 rounded-xl font-bold text-emerald-950 focus:bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+              <i class="fa-solid fa-boxes-stacked absolute left-2.5 top-2.5 text-emerald-700 text-xs"></i>
+              <span class="absolute right-2 top-1.5 text-[9px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">PACK</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 SUPPLIER CONTAINER -->
+        <div class="space-y-3 pt-1">
+          <!-- JAPFA -->
+          <div class="bg-emerald-50/40 p-3.5 sm:p-4 rounded-xl border border-emerald-200/80 space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <label class="text-xs font-bold text-emerald-950 uppercase tracking-wider flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-700"></span> 1. Supplier JAPFA (<span id="count_japfa">4</span>x Kirim)
+              </label>
+              <div class="flex items-center gap-1.5">
+                <button type="button" onclick="changeColumnCount('japfa', -1)" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-900 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-300"><i class="fa-solid fa-minus"></i> Kurangi</button>
+                <button type="button" onclick="changeColumnCount('japfa', 1)" class="bg-emerald-700 hover:bg-emerald-800 text-white text-[10px] font-bold px-2 py-0.5 rounded"><i class="fa-solid fa-plus"></i> Tambah Kirim</button>
+                <span class="text-[9px] font-semibold text-emerald-800 bg-emerald-100/80 px-1.5 py-0.5 rounded">Basis Marinade</span>
+              </div>
+            </div>
+            <div id="grid_japfa" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-10 gap-1.5"></div>
+            <input type="text" id="ket_japfa" placeholder="Keterangan Hari Pengiriman Japfa..." class="w-full py-1.5 px-2.5 text-xs bg-white border border-emerald-200 rounded-lg text-emerald-950 focus:outline-none">
+            <div class="flex justify-between items-center text-xs font-bold text-emerald-950 pt-0.5">
+              <span>Total Ayam Japfa:</span>
+              <span id="displayJapfaTotal" class="bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-200">0 Ekor</span>
+            </div>
+          </div>
+
+          <!-- AFCO -->
+          <div class="bg-rose-50/40 p-3.5 sm:p-4 rounded-xl border border-rose-200/80 space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <label class="text-xs font-bold text-rose-950 uppercase tracking-wider flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-rose-700"></span> 2. Supplier AFCO (<span id="count_afco">4</span>x Kirim)
+              </label>
+              <div class="flex items-center gap-1.5">
+                <button type="button" onclick="changeColumnCount('afco', -1)" class="bg-rose-100 hover:bg-rose-200 text-rose-900 text-[10px] font-bold px-2 py-0.5 rounded border border-rose-300"><i class="fa-solid fa-minus"></i> Kurangi</button>
+                <button type="button" onclick="changeColumnCount('afco', 1)" class="bg-rose-700 hover:bg-rose-800 text-white text-[10px] font-bold px-2 py-0.5 rounded"><i class="fa-solid fa-plus"></i> Tambah Kirim</button>
+                <span class="text-[9px] font-semibold text-rose-800 bg-rose-100/80 px-1.5 py-0.5 rounded">Tanpa Marinade</span>
+              </div>
+            </div>
+            <div id="grid_afco" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-10 gap-1.5"></div>
+            <input type="text" id="ket_afco" placeholder="Keterangan Hari Pengiriman Afco..." class="w-full py-1.5 px-2.5 text-xs bg-white border border-rose-200 rounded-lg text-rose-950 focus:outline-none">
+            <div class="flex justify-between items-center text-xs font-bold text-rose-950 pt-0.5">
+              <span>Total Ayam Afco:</span>
+              <span id="displayAfcoTotal" class="bg-rose-100/80 px-2 py-0.5 rounded border border-rose-200">0 Ekor</span>
+            </div>
+          </div>
+
+          <!-- DELTA -->
+          <div class="bg-slate-50/80 p-3.5 sm:p-4 rounded-xl border border-slate-200 space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <label class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-slate-600"></span> 3. Supplier DELTA (<span id="count_delta">4</span>x Kirim)
+              </label>
+              <div class="flex items-center gap-1.5">
+                <button type="button" onclick="changeColumnCount('delta', -1)" class="bg-slate-200 hover:bg-slate-300 text-slate-800 text-[10px] font-bold px-2 py-0.5 rounded border border-slate-300"><i class="fa-solid fa-minus"></i> Kurangi</button>
+                <button type="button" onclick="changeColumnCount('delta', 1)" class="bg-slate-700 hover:bg-slate-800 text-white text-[10px] font-bold px-2 py-0.5 rounded"><i class="fa-solid fa-plus"></i> Tambah Kirim</button>
+                <span class="text-[9px] font-semibold text-slate-600 bg-slate-200 px-1.5 py-0.5 rounded">Tanpa Marinade</span>
+              </div>
+            </div>
+            <div id="grid_delta" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-10 gap-1.5"></div>
+            <input type="text" id="ket_delta" placeholder="Keterangan Hari Pengiriman Delta..." class="w-full py-1.5 px-2.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none">
+            <div class="flex justify-between items-center text-xs font-bold text-slate-800 pt-0.5">
+              <span>Total Ayam Delta:</span>
+              <span id="displayDeltaTotal" class="bg-slate-200/80 px-2 py-0.5 rounded border border-slate-300">0 Ekor</span>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" id="btnSubmit" class="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-bold py-3 px-5 rounded-xl shadow transition-all flex items-center justify-center gap-2 text-xs">
+          <i class="fa-solid fa-cloud-arrow-up text-emerald-200"></i>
+          <span id="btnSubmitText">Kalkulasi & Simpan ke Database</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- 2. HASIL ANALISIS ORDER SECTION -->
+    <div id="analysisSection" class="bg-white rounded-2xl card-shadow border border-slate-200/80 p-5 sm:p-6 relative space-y-5">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-chart-line text-emerald-700"></i> Hasil Analisis Data Order Store
+          </h2>
+          <p id="resStoreSubtitle" class="text-[11px] text-slate-500">Hasil simulasi store & marinade yang baru diinput</p>
+        </div>
+        <span id="statusBadge" class="hidden text-xs font-bold px-2.5 py-1 rounded-full border"></span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <div class="bg-emerald-50/50 border border-emerald-200/80 rounded-xl p-3.5">
+          <span class="text-[10px] font-bold text-emerald-900 uppercase tracking-wider block">Marinade Terpakai</span>
+          <div class="text-2xl font-extrabold text-emerald-950 my-0.5" id="resPemakaianPack">0 <span class="text-xs font-normal text-slate-500">pack</span></div>
+          <span class="text-[10px] text-emerald-800 font-medium">1 Pack / 10 Ekor Japfa</span>
+        </div>
+
+        <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5">
+          <span class="text-[10px] font-bold text-slate-600 uppercase tracking-wider block">Estimasi Sisa Stok</span>
+          <div class="text-2xl font-extrabold text-slate-800 my-0.5" id="resSisaStok">0 <span class="text-xs font-normal text-slate-500">pack</span></div>
+          <span class="text-[10px] text-slate-500 font-medium">Target Spare: 6-8 Pack</span>
+        </div>
+
+        <div id="orderHighlightBox" class="bg-emerald-800 text-white rounded-xl p-3.5 text-center flex flex-col justify-center shadow-sm">
+          <span class="text-[10px] font-bold text-emerald-200 uppercase tracking-wider block">Rekomendasi Order Marinade Japfa</span>
+          <div class="text-2xl font-extrabold my-0.5" id="resOrderDus">0 DUS</div>
+          <span class="text-xs text-emerald-200 font-medium" id="resOrderPack">(0 Pack Marinade)</span>
+        </div>
+      </div>
+
+      <!-- PERSENTASE SUPPLIER ANALISIS STORE -->
+      <div class="bg-slate-50/80 p-3.5 rounded-xl border border-slate-200 space-y-2.5">
+        <span class="text-[11px] font-bold text-slate-700 uppercase tracking-wider block flex items-center gap-1.5">
+          <i class="fa-solid fa-chart-pie text-emerald-700"></i> Persentase Orderan Ayam 3 Supplier Store Ini
+        </span>
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="bg-emerald-100/50 border border-emerald-200 rounded-lg p-2">
+            <span class="text-[10px] font-bold text-emerald-950 uppercase block">Japfa</span>
+            <div id="resJapfaQty" class="text-xs font-extrabold text-emerald-900 mt-0.5">0 ekor</div>
+            <span id="resJapfaPct" class="text-[10px] font-bold text-emerald-800 bg-white px-1.5 py-0.5 rounded mt-1 inline-block border border-emerald-200">0%</span>
+          </div>
+          <div class="bg-rose-100/50 border border-rose-200 rounded-lg p-2">
+            <span class="text-[10px] font-bold text-rose-950 uppercase block">Afco</span>
+            <div id="resAfcoQty" class="text-xs font-extrabold text-rose-900 mt-0.5">0 ekor</div>
+            <span id="resAfcoPct" class="text-[10px] font-bold text-rose-800 bg-white px-1.5 py-0.5 rounded mt-1 inline-block border border-rose-200">0%</span>
+          </div>
+          <div class="bg-slate-200/60 border border-slate-300 rounded-lg p-2">
+            <span class="text-[10px] font-bold text-slate-800 uppercase block">Delta</span>
+            <div id="resDeltaQty" class="text-xs font-extrabold text-slate-800 mt-0.5">0 ekor</div>
+            <span id="resDeltaPct" class="text-[10px] font-bold text-slate-700 bg-white px-1.5 py-0.5 rounded mt-1 inline-block border border-slate-200">0%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. RECAP TABLE & DATABASE HISTORY SECTION -->
+    <div id="recapTableSection" class="bg-white rounded-2xl card-shadow border border-slate-200/80 p-5 sm:p-6 space-y-4">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-3 border-b border-slate-100 pb-3">
+        <div>
+          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-database text-emerald-700"></i> Database Order Ayam & Marinade
+          </h2>
+          <p class="text-[11px] text-slate-500">Tersimpan per sheet tahun di Google Sheets</p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
+          <!-- Filter Tahun Database -->
+          <select id="filterYearSelect" onchange="fetchCloudData()" class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none">
+            <option value="2026" selected>Tahun 2026</option>
+            <option value="2027">Tahun 2027</option>
+            <option value="2028">Tahun 2028</option>
+          </select>
+
+          <!-- Search Input -->
+          <div class="relative w-full sm:w-44">
+            <input type="text" id="searchStoreInput" oninput="renderRecapTable()" placeholder="Cari store..." class="w-full pl-7 pr-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+            <i class="fa-solid fa-magnifying-glass absolute left-2 top-2 text-slate-400 text-[10px]"></i>
+          </div>
+
+          <div class="flex items-center gap-1.5 w-full sm:w-auto justify-end">
+            <button onclick="fetchCloudData()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-2.5 py-1.5 rounded-lg border border-slate-200"><i class="fa-solid fa-rotate"></i></button>
+            <button onclick="exportToExcelFormatted()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs px-3 py-1.5 rounded-lg"><i class="fa-solid fa-file-excel mr-1"></i>Excel</button>
+            <button onclick="triggerResetWithPin()" class="bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-xs px-2.5 py-1.5 rounded-lg border border-rose-200"><i class="fa-solid fa-trash-can"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto custom-scrollbar">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-slate-900 text-white font-bold tracking-wide">
+              <th class="p-3 rounded-l-lg">No</th>
+              <th class="p-3">Nama Store</th>
+              <th class="p-3 text-center">Bulan</th>
+              <th class="p-3">Pengisi (User)</th>
+              <th class="p-3 text-center bg-emerald-950">Japfa (Ekor)</th>
+              <th class="p-3 text-center bg-rose-950">Afco (Ekor)</th>
+              <th class="p-3 text-center bg-slate-800">Delta (Ekor)</th>
+              <th class="p-3 text-right font-extrabold">Total Ayam</th>
+              <th class="p-3 text-center">Stok Awal</th>
+              <th class="p-3 text-center">Sisa Stok</th>
+              <th class="p-3 text-center bg-emerald-900 text-emerald-100">Order Marinade</th>
+              <th class="p-3 text-center rounded-r-lg">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="recapTableBody" class="divide-y divide-slate-100 font-medium"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4. DASHBOARD REKAP BULANAN -->
+    <div id="bottomSummaryWidget" class="bg-white rounded-2xl card-shadow border border-slate-200/80 p-5 sm:p-6 space-y-5">
+      <div class="border-b border-slate-100 pb-3 flex flex-col md:flex-row items-center justify-between gap-3">
+        <div>
+          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-chart-pie text-emerald-700"></i> Rekapitulasi & Diagram Bulanan
+          </h2>
+          <p class="text-[11px] text-slate-500">Visualisasi proporsi order per bulan</p>
+        </div>
+
+        <div class="flex items-center gap-2 w-full md:w-auto">
+          <label class="text-xs font-bold text-slate-700 whitespace-nowrap"><i class="fa-solid fa-filter text-emerald-700 mr-1"></i>Pilih Bulan:</label>
+          <select id="filterMonthSelect" onchange="renderRecapTable(); renderMonthlyDashboard();" class="bg-emerald-50/70 border border-emerald-200 rounded-xl px-3 py-1.5 text-xs font-bold text-emerald-950 focus:bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none w-full md:w-56">
+            <option value="Semua Bulan">Semua Bulan</option>
+            <option value="Januari">Januari</option>
+            <option value="Februari">Februari</option>
+            <option value="Maret">Maret</option>
+            <option value="April">April</option>
+            <option value="Mei">Mei</option>
+            <option value="Juni">Juni</option>
+            <option value="Juli">Juli</option>
+            <option value="Agustus">Agustus</option>
+            <option value="September">September</option>
+            <option value="Oktober" selected>Oktober</option>
+            <option value="November">November</option>
+            <option value="Desember">Desember</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <div class="lg:col-span-5 bg-slate-50/80 border border-slate-200/80 p-5 rounded-2xl flex flex-col items-center justify-center relative min-h-[280px]">
+          <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <i class="fa-solid fa-chart-pie text-emerald-700"></i> Persentase Supplier (<span id="pieMonthLabel">Bulan</span>)
+          </h3>
+          <div class="w-full max-w-[240px] relative">
+            <canvas id="supplierPieChart"></canvas>
+          </div>
+        </div>
+
+        <div class="lg:col-span-7 space-y-3.5">
+          <div class="flex justify-between items-center">
+            <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Total Komulatif Seluruh Store</span>
+            <span id="badgeStoreCountMonth" class="text-xs font-semibold bg-emerald-50 text-emerald-800 px-2.5 py-0.5 rounded-full border border-emerald-200">0 Store Terinput</span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            <div class="col-span-2 sm:col-span-3 bg-slate-900 text-white p-3.5 rounded-xl shadow-sm flex justify-between items-center">
+              <div>
+                <span class="text-[10px] font-bold text-emerald-300 uppercase block">Total Komulatif Order Ayam</span>
+                <div id="monthlyGrandTotalAyam" class="text-xl sm:text-2xl font-black my-0.5">0 EKOR</div>
+              </div>
+              <div class="w-9 h-9 bg-emerald-800/50 rounded-lg flex items-center justify-center border border-emerald-700">
+                <i class="fa-solid fa-drumstick-bite text-lg text-emerald-300"></i>
+              </div>
+            </div>
+
+            <div class="bg-emerald-50/80 border border-emerald-200 rounded-xl p-3">
+              <span class="text-[10px] font-bold text-emerald-950 uppercase">Japfa (Ekor)</span>
+              <div id="monthlyJapfaQty" class="text-base font-extrabold text-emerald-900 mt-0.5">0</div>
+              <span id="monthlyJapfaPct" class="text-[10px] font-bold text-emerald-800">0% Proporsi</span>
+            </div>
+
+            <div class="bg-rose-50/80 border border-rose-200 rounded-xl p-3">
+              <span class="text-[10px] font-bold text-rose-950 uppercase">Afco (Ekor)</span>
+              <div id="monthlyAfcoQty" class="text-base font-extrabold text-rose-900 mt-0.5">0</div>
+              <span id="monthlyAfcoPct" class="text-[10px] font-bold text-rose-800">0% Proporsi</span>
+            </div>
+
+            <div class="bg-slate-100 border border-slate-200 rounded-xl p-3">
+              <span class="text-[10px] font-bold text-slate-800 uppercase">Delta (Ekor)</span>
+              <div id="monthlyDeltaQty" class="text-base font-extrabold text-slate-800 mt-0.5">0</div>
+              <span id="monthlyDeltaPct" class="text-[10px] font-bold text-slate-600">0% Proporsi</span>
+            </div>
+
+            <div class="col-span-1 sm:col-span-1 bg-slate-50 border border-slate-200 rounded-xl p-3">
+              <span class="text-[10px] font-bold text-slate-700 uppercase block">Stok Awal Marinade</span>
+              <div id="monthlyStokAwalPack" class="text-base font-extrabold text-slate-900 mt-0.5">0 PACK</div>
+            </div>
+
+            <div class="col-span-1 sm:col-span-2 bg-emerald-800 text-white rounded-xl p-3 shadow-sm flex flex-col justify-between">
+              <div>
+                <span class="text-[10px] font-bold text-emerald-200 uppercase block">Total Order Marinade Japfa</span>
+                <div id="monthlyOrderDus" class="text-lg font-black my-0.5">0 DUS</div>
+              </div>
+              <span id="monthlyOrderPack" class="text-[10px] text-emerald-200 font-medium">(0 Pack Marinade)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="bg-slate-900 text-slate-400 text-xs py-5 border-t border-slate-800 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 text-center space-y-0.5">
+      <p class="font-semibold text-slate-300">Aplikasi Monitoring Order Ayam 3 Supplier & Marinade Japfa © 2026</p>
+      <p class="text-slate-500 text-[11px]">Integrated Auto-Sync Cloud Database & Google Sheets Real-Time</p>
+    </div>
+  </footer>
+
+  <!-- SCRIPT LOGIC -->
+  <script>
+    function getStoredAdminPin() {
+      return localStorage.getItem('appAdminPin_v1') || "1234";
+    }
+
+    const MONTHS_LIST = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+    const MARINADE_STORE_DATA = [
+      {"name": "AGS JOMBANG PLOSO", "stokAwal": 26, "ayamAwal": 280},
+      {"name": "AGS PASURUAN indragiri", "stokAwal": 16, "ayamAwal": 160},
+      {"name": "AGS TEGAL BESAR JEMBER", "stokAwal": 20, "ayamAwal": 80},
+      {"name": "AGS JOMBANG MOJOAGUNG", "stokAwal": 10, "ayamAwal": 280},
+      {"name": "AGS PASURUAN BUGUL", "stokAwal": 16, "ayamAwal": 160},
+      {"name": "AGS JEMBER BALUNG", "stokAwal": 12, "ayamAwal": 160},
+      {"name": "AGS MAGETAN jl.panglima sudirman", "stokAwal": 20, "ayamAwal": 200},
+      {"name": "AGS NGANJUK A.YANI", "stokAwal": 20, "ayamAwal": 200}
+    ];
+
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwa603zBWU-r_y56EvWqyUA9FCKc084ZcYD4607UNz3E7oiW2IUoCGGcG6YbHvpYqXUSg/exec";
+
+    let currentUser = JSON.parse(localStorage.getItem('currentUser_v14') || 'null');
+    let columnCounts = { japfa: 4, afco: 4, delta: 4 };
+    let marinadeOrdersList = [];
+    let supplierPieChartInstance = null;
+    let pendingAction = null; 
+
+    function cleanMonthName(rawMonth) {
+      if(!rawMonth) return "";
+      for (let m of MONTHS_LIST) {
+        if (rawMonth.toLowerCase().includes(m.toLowerCase())) return m;
+      }
+      return rawMonth.trim();
+    }
+
+    function updateMonthLimits() {
+      const selectedYear = parseInt(document.getElementById("inputYear").value);
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonthIndex = now.getMonth();
+
+      const monthSelect = document.getElementById("inputMonth");
+      monthSelect.innerHTML = "";
+
+      MONTHS_LIST.forEach((m, idx) => {
+        const option = document.createElement("option");
+        option.value = m;
+        option.textContent = m;
+
+        if (selectedYear === currentYear) {
+          const maxAllowedMonthIndex = currentMonthIndex + 2;
+          if (idx < currentMonthIndex || idx > maxAllowedMonthIndex) {
+            option.disabled = true;
+            option.textContent += " (Terkunci)";
+          }
+        } else if (selectedYear < currentYear) {
+          option.disabled = true;
+          option.textContent += " (Lewat)";
+        }
+
+        monthSelect.appendChild(option);
+      });
+
+      for (let opt of monthSelect.options) {
+        if (!opt.disabled) {
+          monthSelect.value = opt.value;
+          break;
+        }
+      }
+    }
+
+    function syncFilterYearWithForm(yearVal) {
+      const filterYearSelect = document.getElementById("filterYearSelect");
+      if(filterYearSelect) {
+        filterYearSelect.value = yearVal;
+        fetchCloudData();
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      checkUserLoginStatus();
+      updateMonthLimits();
+      renderSupplierInputs('japfa');
+      renderSupplierInputs('afco');
+      renderSupplierInputs('delta');
+      populateDatalist();
+
+      fetchCloudData();
+
+      setInterval(() => {
+        fetchCloudData(true);
+      }, 10000);
+
+      if (MARINADE_STORE_DATA.length > 0) {
+        document.getElementById("inputStoreName").value = MARINADE_STORE_DATA[0].name;
+        onStoreSelect(MARINADE_STORE_DATA[0].name);
+      }
+    });
+
+    async function fetchCloudData(isBackground = false) {
+      if (!GOOGLE_SCRIPT_URL || !GOOGLE_SCRIPT_URL.includes("script.google.com")) return;
+
+      const selectedYear = document.getElementById("filterYearSelect")?.value || "2026";
+
+      try {
+        const response = await fetch(`${GOOGLE_SCRIPT_URL}?year=${selectedYear}`, {
+          method: "GET",
+          redirect: "follow"
+        });
+
+        if (response.ok) {
+          const cloudData = await response.json();
+          if (Array.isArray(cloudData)) {
+            marinadeOrdersList = cloudData.map(item => ({
+              ...item,
+              month: cleanMonthName(item.month)
+            }));
+            localStorage.setItem(`marinadeOrdersData_${selectedYear}`, JSON.stringify(marinadeOrdersList));
+            renderRecapTable();
+            renderMonthlyDashboard();
+          }
+        }
+      } catch (err) {
+        console.log("Fetch Cloud update background skipped.");
+      }
+    }
+
+    function checkUserLoginStatus() {
+      if (!currentUser) {
+        document.getElementById("loginModal").classList.remove("hidden");
+      } else {
+        document.getElementById("loginModal").classList.add("hidden");
+        document.getElementById("userDisplayNama").textContent = currentUser.nama;
+        document.getElementById("userDisplayJabatan").textContent = currentUser.jabatan;
+      }
+    }
+
+    function handleUserLogin(e) {
+      e.preventDefault();
+      const nama = document.getElementById("loginNama").value.trim();
+      const jabatan = document.getElementById("loginJabatan").value.trim();
+      const penempatan = document.getElementById("loginPenempatan").value.trim() || "-";
+
+      if(!nama || !jabatan) return;
+
+      currentUser = { nama, jabatan, penempatan };
+      localStorage.setItem('currentUser_v14', JSON.stringify(currentUser));
+      checkUserLoginStatus();
+    }
+
+    function openLoginModal() {
+      document.getElementById("loginModal").classList.remove("hidden");
+    }
+
+    function renderSupplierInputs(supplier) {
+      const container = document.getElementById(`grid_${supplier}`);
+      const count = columnCounts[supplier];
+      document.getElementById(`count_${supplier}`).textContent = count;
+
+      let oldVals = [];
+      for(let i = 1; i <= 10; i++) {
+        let el = document.getElementById(`${supplier}_${i}`);
+        if(el) oldVals.push(el.value);
+        else oldVals.push("0");
+      }
+
+      let colorBorder = supplier === 'japfa' ? 'border-emerald-200 text-emerald-950' : (supplier === 'afco' ? 'border-rose-200 text-rose-950' : 'border-slate-200 text-slate-800');
+
+      let html = "";
+      for (let i = 1; i <= count; i++) {
+        let val = oldVals[i-1] || "0";
+        html += `
+          <div>
+            <span class="text-[9px] text-slate-500 font-bold block text-center">Kirim ${i}</span>
+            <input type="number" id="${supplier}_${i}" min="0" value="${val}" oninput="calculateTotals()" class="w-full py-1 px-1 text-xs bg-white border ${colorBorder} rounded text-center font-bold focus:outline-none">
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+      calculateTotals();
+    }
+
+    function changeColumnCount(supplier, delta) {
+      let current = columnCounts[supplier];
+      let updated = current + delta;
+
+      if (updated < 4) { alert("Batas minimal 4 kolom kiriman."); return; }
+      if (updated > 10) { alert("Batas maksimal 10 kolom kiriman."); return; }
+
+      columnCounts[supplier] = updated;
+      renderSupplierInputs(supplier);
+    }
+
+    function populateDatalist() {
+      const datalist = document.getElementById("storeDatalist");
+      datalist.innerHTML = MARINADE_STORE_DATA.map(s => `<option value="${s.name}">Stok Awal: ${s.stokAwal} Pack</option>`).join('');
+    }
+
+    function calculateTotals() {
+      let japfaArr = [], afcoArr = [], deltaArr = [];
+      let japfaSum = 0, afcoSum = 0, deltaSum = 0;
+
+      for (let i = 1; i <= columnCounts.japfa; i++) {
+        let val = parseInt(document.getElementById(`japfa_${i}`)?.value) || 0;
+        japfaArr.push(val); japfaSum += val;
+      }
+      for (let i = 1; i <= columnCounts.afco; i++) {
+        let val = parseInt(document.getElementById(`afco_${i}`)?.value) || 0;
+        afcoArr.push(val); afcoSum += val;
+      }
+      for (let i = 1; i <= columnCounts.delta; i++) {
+        let val = parseInt(document.getElementById(`delta_${i}`)?.value) || 0;
+        deltaArr.push(val); deltaSum += val;
+      }
+
+      document.getElementById("displayJapfaTotal").textContent = `${japfaSum.toLocaleString('id-ID')} Ekor`;
+      document.getElementById("displayAfcoTotal").textContent = `${afcoSum.toLocaleString('id-ID')} Ekor`;
+      document.getElementById("displayDeltaTotal").textContent = `${deltaSum.toLocaleString('id-ID')} Ekor`;
+
+      return { japfaSum, afcoSum, deltaSum, grandTotal: japfaSum + afcoSum + deltaSum, japfaArr, afcoArr, deltaArr };
+    }
+
+    function onStoreSelect(val) {
+      const match = MARINADE_STORE_DATA.find(s => s.name.toLowerCase() === val.toLowerCase());
+      if (match) {
+        document.getElementById("inputStokAwal").value = match.stokAwal;
+        const totalSample = match.ayamAwal;
+        const japfaVal = Math.round((totalSample * 0.50) / columnCounts.japfa / 10) * 10;
+        const afcoVal = Math.round((totalSample * 0.30) / columnCounts.afco / 10) * 10;
+        const deltaVal = Math.round((totalSample * 0.20) / columnCounts.delta / 10) * 10;
+
+        for (let i = 1; i <= columnCounts.japfa; i++) if(document.getElementById(`japfa_${i}`)) document.getElementById(`japfa_${i}`).value = japfaVal;
+        for (let i = 1; i <= columnCounts.afco; i++) if(document.getElementById(`afco_${i}`)) document.getElementById(`afco_${i}`).value = afcoVal;
+        for (let i = 1; i <= columnCounts.delta; i++) if(document.getElementById(`delta_${i}`)) document.getElementById(`delta_${i}`).value = deltaVal;
+
+        calculateTotals();
+      }
+    }
+
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+      if(!currentUser) { openLoginModal(); return; }
+
+      const btnSubmit = document.getElementById("btnSubmit");
+      const btnSubmitText = document.getElementById("btnSubmitText");
+
+      btnSubmit.disabled = true;
+      btnSubmitText.textContent = "Menyimpan ke Cloud...";
+
+      const storeName = document.getElementById("inputStoreName").value.trim();
+      const year = document.getElementById("inputYear").value;
+      const rawMonth = document.getElementById("inputMonth").value;
+      const month = cleanMonthName(rawMonth);
+      const stokAwal = parseInt(document.getElementById("inputStokAwal").value) || 0;
+      
+      const ketJapfa = document.getElementById("ket_japfa").value.trim() || "-";
+      const ketAfco = document.getElementById("ket_afco").value.trim() || "-";
+      const ketDelta = document.getElementById("ket_delta").value.trim() || "-";
+
+      const totals = calculateTotals();
+      const packUsed = Math.ceil(totals.japfaSum / 10);
+      const sisaStok = stokAwal - packUsed;
+
+      let orderDus = 0;
+      if (sisaStok < 8) {
+        if (sisaStok <= -12) orderDus = Math.ceil((8 - sisaStok) / 20);
+        else orderDus = 1;
+      }
+      const orderPack = orderDus * 20;
+
+      let statusText = "STOK AMAN";
+      let statusClass = "bg-emerald-100 text-emerald-800 border-emerald-300";
+
+      if (sisaStok < 0) {
+        statusText = "DEFISIT / MINUS";
+        statusClass = "bg-rose-100 text-rose-800 border-rose-300";
+      } else if (sisaStok < 8) {
+        statusText = "KRITIS (< 8 PACK)";
+        statusClass = "bg-rose-50 text-rose-700 border-rose-200";
+      }
+
+      document.getElementById("resStoreSubtitle").textContent = `${storeName} (${month} ${year})`;
+      const badge = document.getElementById("statusBadge");
+      badge.textContent = statusText;
+      badge.className = `text-xs font-bold px-2.5 py-1 rounded-full border ${statusClass}`;
+      badge.classList.remove("hidden");
+
+      document.getElementById("resPemakaianPack").innerHTML = `${packUsed} <span class="text-xs font-normal text-slate-500">pack</span>`;
+      document.getElementById("resSisaStok").innerHTML = `${sisaStok} <span class="text-xs font-normal text-slate-500">pack</span>`;
+      document.getElementById("resOrderDus").textContent = `${orderDus} DUS`;
+      document.getElementById("resOrderPack").textContent = `(${orderPack} Pack Marinade)`;
+
+      let pJapfa = 0, pAfco = 0, pDelta = 0;
+      if (totals.grandTotal > 0) {
+        pJapfa = Math.round((totals.japfaSum / totals.grandTotal) * 100);
+        pAfco = Math.round((totals.afcoSum / totals.grandTotal) * 100);
+        pDelta = 100 - pJapfa - pAfco;
+      }
+
+      document.getElementById("resJapfaQty").textContent = `${totals.japfaSum.toLocaleString('id-ID')} ekor`;
+      document.getElementById("resJapfaPct").textContent = `${pJapfa}% Proporsi`;
+
+      document.getElementById("resAfcoQty").textContent = `${totals.afcoSum.toLocaleString('id-ID')} ekor`;
+      document.getElementById("resAfcoPct").textContent = `${pAfco}% Proporsi`;
+
+      document.getElementById("resDeltaQty").textContent = `${totals.deltaSum.toLocaleString('id-ID')} ekor`;
+      document.getElementById("resDeltaPct").textContent = `${pDelta}% Proporsi`;
+
+      const newRecord = {
+        id: Date.now(),
+        userNama: currentUser.nama,
+        userJabatan: currentUser.jabatan,
+        userPenempatan: currentUser.penempatan,
+        storeName: storeName,
+        year: year,
+        month: month,
+        stokAwal: stokAwal,
+        japfaArr: totals.japfaArr,
+        afcoArr: totals.afcoArr,
+        deltaArr: totals.deltaArr,
+        ketJapfa: ketJapfa,
+        ketAfco: ketAfco,
+        ketDelta: ketDelta,
+        japfaQty: totals.japfaSum,
+        afcoQty: totals.afcoSum,
+        deltaQty: totals.deltaSum,
+        totalAyam: totals.grandTotal,
+        packUsed: packUsed,
+        sisaStok: sisaStok,
+        orderDus: orderDus,
+        orderPack: orderPack,
+        statusText: statusText
+      };
+
+      const existingIdx = marinadeOrdersList.findIndex(i => i.storeName.toLowerCase() === storeName.toLowerCase() && cleanMonthName(i.month) === month);
+      if (existingIdx >= 0) marinadeOrdersList[existingIdx] = newRecord;
+      else marinadeOrdersList.unshift(newRecord);
+
+      localStorage.setItem(`marinadeOrdersData_${year}`, JSON.stringify(marinadeOrdersList));
+
+      if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL.includes("script.google.com")) {
+        try {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(newRecord)
+          });
+          setTimeout(fetchCloudData, 1500);
+        } catch (err) {
+          console.log("Sync Cloud ditiadakan.");
+        }
+      }
+
+      btnSubmit.disabled = false;
+      btnSubmitText.textContent = "Kalkulasi & Simpan ke Database";
+
+      document.getElementById("analysisSection").scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function renderRecapTable() {
+      const tbody = document.getElementById("recapTableBody");
+      const selectedMonth = document.getElementById("filterMonthSelect")?.value || "Semua Bulan";
+      const searchQuery = (document.getElementById("searchStoreInput")?.value || "").trim().toLowerCase();
+
+      let filteredList = marinadeOrdersList;
+
+      if (selectedMonth !== "Semua Bulan") {
+        filteredList = filteredList.filter(item => cleanMonthName(item.month) === selectedMonth);
+      }
+
+      if (searchQuery !== "") {
+        filteredList = filteredList.filter(item => (item.storeName || "").toLowerCase().includes(searchQuery));
+      }
+
+      if (filteredList.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="12" class="p-8 text-center text-slate-400 font-medium">
+              <i class="fa-solid fa-box-open text-2xl mb-2 block text-slate-300"></i>
+              Tidak ada data yang cocok untuk filter tahun/bulan/pencarian ini.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      let rows = "";
+      filteredList.forEach((item, idx) => {
+        rows += `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="p-3 font-semibold text-slate-400">${idx + 1}</td>
+            <td class="p-3 font-bold text-slate-800">${item.storeName}</td>
+            <td class="p-3 text-center text-slate-600">${cleanMonthName(item.month)}</td>
+            <td class="p-3 text-slate-700">
+              <span class="font-bold text-slate-800 block">${item.userNama || '-'}</span>
+              <span class="text-[10px] text-slate-400 block">${item.userJabatan || '-'}</span>
+            </td>
+            <td class="p-3 text-center font-bold text-emerald-900 bg-emerald-50/30">${(item.japfaQty || 0).toLocaleString('id-ID')}</td>
+            <td class="p-3 text-center font-bold text-rose-900 bg-rose-50/30">${(item.afcoQty || 0).toLocaleString('id-ID')}</td>
+            <td class="p-3 text-center font-bold text-slate-800 bg-slate-100/50">${(item.deltaQty || 0).toLocaleString('id-ID')}</td>
+            <td class="p-3 text-right font-black text-slate-800">${(item.totalAyam || 0).toLocaleString('id-ID')} ekor</td>
+            <td class="p-3 text-center font-semibold text-slate-600">${item.stokAwal || 0}</td>
+            <td class="p-3 text-center font-bold ${item.sisaStok < 8 ? 'text-rose-600' : 'text-slate-800'}">${item.sisaStok || 0}</td>
+            <td class="p-3 text-center font-bold text-emerald-950 bg-emerald-100/70">${item.orderDus || 0} DUS (${item.orderPack || 0} pck)</td>
+            <td class="p-3 text-center">
+              <button onclick="triggerDeleteWithPin(${item.id})" class="text-slate-400 hover:text-rose-600 p-1 transition-colors">
+                <i class="fa-solid fa-lock text-[9px] mr-0.5 text-slate-300"></i><i class="fa-solid fa-trash-can"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = rows;
+    }
+
+    function renderMonthlyDashboard() {
+      const selectFilter = document.getElementById("filterMonthSelect");
+      if(!selectFilter) return;
+
+      const selectedMonth = selectFilter.value;
+      document.getElementById("pieMonthLabel").textContent = selectedMonth || "Semua Bulan";
+
+      let filteredList = marinadeOrdersList;
+      if (selectedMonth !== "Semua Bulan") {
+        filteredList = marinadeOrdersList.filter(item => cleanMonthName(item.month) === selectedMonth);
+      }
+
+      let mJapfa = 0, mAfco = 0, mDelta = 0, mTotalAyam = 0;
+      let mStokAwalPack = 0, mOrderDus = 0, mOrderPack = 0;
+
+      filteredList.forEach(item => {
+        mJapfa += item.japfaQty || 0;
+        mAfco += item.afcoQty || 0;
+        mDelta += item.deltaQty || 0;
+        mTotalAyam += item.totalAyam || 0;
+        mStokAwalPack += item.stokAwal || 0;
+        mOrderDus += item.orderDus || 0;
+        mOrderPack += item.orderPack || 0;
+      });
+
+      document.getElementById("badgeStoreCountMonth").textContent = `${filteredList.length} Store Terinput`;
+      document.getElementById("monthlyGrandTotalAyam").textContent = `${mTotalAyam.toLocaleString('id-ID')} EKOR`;
+
+      document.getElementById("monthlyJapfaQty").textContent = mJapfa.toLocaleString('id-ID');
+      document.getElementById("monthlyAfcoQty").textContent = mAfco.toLocaleString('id-ID');
+      document.getElementById("monthlyDeltaQty").textContent = mDelta.toLocaleString('id-ID');
+
+      let pJapfa = 0, pAfco = 0, pDelta = 0;
+      if (mTotalAyam > 0) {
+        pJapfa = Math.round((mJapfa / mTotalAyam) * 100);
+        pAfco = Math.round((mAfco / mTotalAyam) * 100);
+        pDelta = 100 - pJapfa - pAfco;
+      }
+
+      document.getElementById("monthlyJapfaPct").textContent = `${pJapfa}% Proporsi`;
+      document.getElementById("monthlyAfcoPct").textContent = `${pAfco}% Proporsi`;
+      document.getElementById("monthlyDeltaPct").textContent = `${pDelta}% Proporsi`;
+
+      document.getElementById("monthlyStokAwalPack").textContent = `${mStokAwalPack.toLocaleString('id-ID')} PACK`;
+      document.getElementById("monthlyOrderDus").textContent = `${mOrderDus.toLocaleString('id-ID')} DUS`;
+      document.getElementById("monthlyOrderPack").textContent = `(${mOrderPack.toLocaleString('id-ID')} Pack Marinade)`;
+
+      const ctx = document.getElementById('supplierPieChart').getContext('2d');
+      if (supplierPieChartInstance) supplierPieChartInstance.destroy();
+
+      // Warna Chart: Hijau Emerald, Merah Muted, Abu-Abu Slate
+      const chartData = (mTotalAyam === 0) ? [1, 1, 1] : [mJapfa, mAfco, mDelta];
+      const bgColors = (mTotalAyam === 0) ? ['#e2e8f0', '#cbd5e1', '#f1f5f9'] : ['#047857', '#be123c', '#64748b'];
+
+      supplierPieChartInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Japfa', 'Afco', 'Delta'],
+          datasets: [{ data: chartData, backgroundColor: bgColors, borderWidth: 2, borderColor: '#ffffff' }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', size: 11, weight: 'bold' }, padding: 12 } },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  if(mTotalAyam === 0) return " Belum Ada Data Pada Bulan Ini";
+                  let val = context.raw || 0;
+                  let pct = Math.round((val / mTotalAyam) * 100);
+                  return ` ${context.label}: ${val.toLocaleString('id-ID')} ekor (${pct}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function openChangePinModal() {
+      document.getElementById("inputOldPin").value = "";
+      document.getElementById("inputNewPin").value = "";
+      document.getElementById("inputConfirmPin").value = "";
+      document.getElementById("changePinErrorText").classList.add("hidden");
+      document.getElementById("changePinModal").classList.remove("hidden");
+      document.getElementById("inputOldPin").focus();
+    }
+
+    function closeChangePinModal() { document.getElementById("changePinModal").classList.add("hidden"); }
+
+    function handleChangePinSubmit(e) {
+      e.preventDefault();
+      const oldPin = document.getElementById("inputOldPin").value;
+      const newPin = document.getElementById("inputNewPin").value;
+      const confirmPin = document.getElementById("inputConfirmPin").value;
+      const errorText = document.getElementById("changePinErrorText");
+      const currentAdminPin = getStoredAdminPin();
+
+      if (oldPin !== currentAdminPin) {
+        errorText.textContent = "PIN Lama Salah!";
+        errorText.classList.remove("hidden");
+        return;
+      }
+      if (newPin !== confirmPin) {
+        errorText.textContent = "Konfirmasi PIN Baru Tidak Cocok!";
+        errorText.classList.remove("hidden");
+        return;
+      }
+      if (newPin.trim().length < 4) {
+        errorText.textContent = "PIN Minimal 4 Karakter!";
+        errorText.classList.remove("hidden");
+        return;
+      }
+
+      localStorage.setItem('appAdminPin_v1', newPin.trim());
+      alert("PIN Admin Berhasil Diperbarui!");
+      closeChangePinModal();
+    }
+
+    function triggerDeleteWithPin(id) {
+      pendingAction = { type: 'delete', id: id };
+      document.getElementById("pinModalSub").textContent = "Masukkan PIN Admin untuk menghapus baris data ini.";
+      openPinModal();
+    }
+
+    function triggerResetWithPin() {
+      pendingAction = { type: 'reset' };
+      document.getElementById("pinModalSub").textContent = "Konfirmasi PIN Admin untuk mereset seluruh database.";
+      openPinModal();
+    }
+
+    function openPinModal() {
+      document.getElementById("inputAdminPin").value = "";
+      document.getElementById("pinErrorText").classList.add("hidden");
+      document.getElementById("pinModal").classList.remove("hidden");
+      document.getElementById("inputAdminPin").focus();
+    }
+
+    function closePinModal() {
+      document.getElementById("pinModal").classList.add("hidden");
+      pendingAction = null;
+    }
+
+    function handlePinSubmit(e) {
+      e.preventDefault();
+      const enteredPin = document.getElementById("inputAdminPin").value;
+      const currentAdminPin = getStoredAdminPin();
+
+      if (enteredPin === currentAdminPin) {
+        document.getElementById("pinModal").classList.add("hidden");
+        if (pendingAction && pendingAction.type === 'delete') executeDeleteRecord(pendingAction.id);
+        else if (pendingAction && pendingAction.type === 'reset') executeClearAllData();
+        pendingAction = null;
+      } else {
+        document.getElementById("pinErrorText").classList.remove("hidden");
+        document.getElementById("inputAdminPin").value = "";
+        document.getElementById("inputAdminPin").focus();
+      }
+    }
+
+    function executeDeleteRecord(id) {
+      const selectedYear = document.getElementById("filterYearSelect")?.value || "2026";
+      marinadeOrdersList = marinadeOrdersList.filter(i => i.id !== id);
+      localStorage.setItem(`marinadeOrdersData_${selectedYear}`, JSON.stringify(marinadeOrdersList));
+      renderRecapTable();
+      renderMonthlyDashboard();
+    }
+
+    function executeClearAllData() {
+      const selectedYear = document.getElementById("filterYearSelect")?.value || "2026";
+      marinadeOrdersList = [];
+      localStorage.removeItem(`marinadeOrdersData_${selectedYear}`);
+      renderRecapTable();
+      renderMonthlyDashboard();
+    }
+
+    function exportToExcelFormatted() {
+      if (marinadeOrdersList.length === 0) { alert("Database masih kosong!"); return; }
+      const selectedYear = document.getElementById("filterYearSelect")?.value || "2026";
+
+      let maxJapfaCols = 4, maxAfcoCols = 4, maxDeltaCols = 4;
+      marinadeOrdersList.forEach(item => {
+        if(item.japfaArr && item.japfaArr.length > maxJapfaCols) maxJapfaCols = item.japfaArr.length;
+        if(item.afcoArr && item.afcoArr.length > maxAfcoCols) maxAfcoCols = item.afcoArr.length;
+        if(item.deltaArr && item.deltaArr.length > maxDeltaCols) maxDeltaCols = item.deltaArr.length;
+      });
+
+      const excelData = marinadeOrdersList.map((item, idx) => {
+        let rowData = {
+          "No": idx + 1,
+          "Nama Pengisi": item.userNama || "-",
+          "Jabatan Pengisi": item.userJabatan || "-",
+          "Penempatan Store": item.userPenempatan || "-",
+          "Nama Store": item.storeName,
+          "Tahun": item.year,
+          "Periode Bulan": cleanMonthName(item.month),
+          "Stok Awal Marinade (Pack)": item.stokAwal
+        };
+
+        for(let i=1; i<=maxJapfaCols; i++) rowData[`Japfa Kirim ${i}`] = item.japfaArr ? (item.japfaArr[i-1] || 0) : 0;
+        rowData["Total Ayam Japfa (Ekor)"] = item.japfaQty;
+        rowData["Keterangan Kirim Japfa"] = item.ketJapfa || "-";
+
+        for(let i=1; i<=maxAfcoCols; i++) rowData[`Afco Kirim ${i}`] = item.afcoArr ? (item.afcoArr[i-1] || 0) : 0;
+        rowData["Total Ayam Afco (Ekor)"] = item.afcoQty;
+        rowData["Keterangan Kirim Afco"] = item.ketAfco || "-";
+
+        for(let i=1; i<=maxDeltaCols; i++) rowData[`Delta Kirim ${i}`] = item.deltaArr ? (item.deltaArr[i-1] || 0) : 0;
+        rowData["Total Ayam Delta (Ekor)"] = item.deltaQty;
+        rowData["Keterangan Kirim Delta"] = item.ketDelta || "-";
+
+        rowData["GRAND TOTAL AYAM (Ekor)"] = item.totalAyam;
+        rowData["Marinade Terpakai (Pack)"] = item.packUsed;
+        rowData["Sisa Stok Marinade (Pack)"] = item.sisaStok;
+        rowData["Rekomendasi Order (DUS)"] = item.orderDus;
+        rowData["Rekomendasi Order (PACK)"] = item.orderPack;
+        rowData["Status Stok"] = item.statusText;
+
+        return rowData;
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(excelData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, `Database_${selectedYear}`);
+      XLSX.writeFile(workbook, `Rekap_Database_Monitoring_Order_Ayam_${selectedYear}.xlsx`);
+    }
+  </script>
+</body>
+</html>
